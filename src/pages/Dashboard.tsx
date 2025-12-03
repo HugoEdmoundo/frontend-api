@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { bookService } from '../services/books';
-import type { Book, BookFormData } from '../services/books'; // Pakai type import
+import type { Book, BookFormData } from '../services/books';
+import PeminjamanForm from '../components/PeminjamanForm';
+import PeminjamanList from '../components/PeminjamanList';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingBooks, setLoadingBooks] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [activeTab, setActiveTab] = useState<'books' | 'peminjaman'>('books');
   const [formData, setFormData] = useState<BookFormData>({
     title: '',
     author: '',
@@ -16,17 +20,34 @@ const Dashboard: React.FC = () => {
     isbn: '',
     quantity: 0
   });
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    loadBooks();
-  }, []);
+    if (activeTab === 'books') {
+      loadBooks();
+    }
+  }, [activeTab]);
 
   const loadBooks = async () => {
     try {
+      setLoadingBooks(true);
+      setError('');
       const booksData = await bookService.getAll();
-      setBooks(booksData);
-    } catch (error) {
-      alert('Failed to load books');
+      
+      // Ensure booksData is an array
+      if (Array.isArray(booksData)) {
+        setBooks(booksData);
+      } else {
+        console.error('Expected array but got:', booksData);
+        setBooks([]);
+        setError('Invalid data format received from server');
+      }
+    } catch (error: any) {
+      console.error('Failed to load books:', error);
+      setError('Failed to load books. Please check console for details.');
+      setBooks([]);
+    } finally {
+      setLoadingBooks(false);
     }
   };
 
@@ -41,6 +62,7 @@ const Dashboard: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     try {
       if (editingBook) {
@@ -54,7 +76,9 @@ const Dashboard: React.FC = () => {
       resetForm();
       await loadBooks();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Operation failed');
+      const errorMessage = error.response?.data?.message || error.message || 'Operation failed';
+      setError(errorMessage);
+      alert(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -63,12 +87,12 @@ const Dashboard: React.FC = () => {
   const handleEdit = (book: Book) => {
     setEditingBook(book);
     setFormData({
-      title: book.title,
-      author: book.author,
+      title: book.title || '',
+      author: book.author || '',
       publisher: book.publisher || '',
       year_published: book.year_published || undefined,
       isbn: book.isbn || '',
-      quantity: book.quantity
+      quantity: book.quantity || 0
     });
   };
 
@@ -96,151 +120,219 @@ const Dashboard: React.FC = () => {
     });
   };
 
+  // Ensure books is always an array for rendering
+  const safeBooks = Array.isArray(books) ? books : [];
+
   return (
-    <Layout title="Manajemen Buku">
+    <Layout title="Library Management System">
       <div className="dashboard-container">
-        {/* Form tambah/edit buku */}
-        <div className="form-section">
-          <h2>{editingBook ? 'Edit Buku' : 'Tambah Buku Baru'}</h2>
-          
-          <form onSubmit={handleSubmit} className="book-form">
-            <div className="form-row">
-              <input
-                type="text"
-                name="title"
-                placeholder="Title"
-                required
-                value={formData.title}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-              
-              <input
-                type="text"
-                name="author"
-                placeholder="Author"
-                required
-                value={formData.author}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-            </div>
-            
-            <div className="form-row">
-              <input
-                type="text"
-                name="publisher"
-                placeholder="Publisher"
-                value={formData.publisher}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-              
-              <input
-                type="number"
-                name="year_published"
-                placeholder="Year Published"
-                value={formData.year_published || ''}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-            </div>
-            
-            <div className="form-row">
-              <input
-                type="text"
-                name="isbn"
-                placeholder="ISBN"
-                value={formData.isbn}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-              
-              <input
-                type="number"
-                name="quantity"
-                placeholder="Quantity"
-                required
-                value={formData.quantity}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-            </div>
-            
-            <div className="form-actions">
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary"
-              >
-                {loading ? 'Saving...' : editingBook ? 'Update Book' : 'Add Book'}
-              </button>
-              
-              {editingBook && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="btn btn-secondary"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </form>
+        {/* Tabs Navigation */}
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === 'books' ? 'active' : ''}`}
+            onClick={() => setActiveTab('books')}
+          >
+            📚 Books Management
+          </button>
+          <button
+            className={`tab ${activeTab === 'peminjaman' ? 'active' : ''}`}
+            onClick={() => setActiveTab('peminjaman')}
+          >
+            📖 Book Borrowing
+          </button>
         </div>
 
-        {/* Books Table */}
-        <div className="table-section">
-          <h2>Daftar Buku ({books.length})</h2>
-          
-          <div className="table-container">
-            <table className="books-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Publisher</th>
-                  <th>Year</th>
-                  <th>ISBN</th>
-                  <th>Quantity</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((book) => (
-                  <tr key={book.id}>
-                    <td>{book.title}</td>
-                    <td>{book.author}</td>
-                    <td>{book.publisher || '-'}</td>
-                    <td>{book.year_published || '-'}</td>
-                    <td>{book.isbn || '-'}</td>
-                    <td>{book.quantity}</td>
-                    <td className="actions-cell">
-                      <button
-                        onClick={() => handleEdit(book)}
-                        className="btn-edit"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(book.id)}
-                        className="btn-delete"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            
-            {books.length === 0 && (
-              <div className="empty-state">
-                No books found. Add your first book above.
+        {activeTab === 'books' ? (
+          <>
+            {/* Book Form */}
+            <div className="form-section">
+              <h2>{editingBook ? 'Edit Book' : 'Add New Book'}</h2>
+              
+              {error && <div className="alert error">{error}</div>}
+              
+              <form onSubmit={handleSubmit} className="book-form">
+                <div className="form-row">
+                  <input
+                    type="text"
+                    name="title"
+                    placeholder="Title"
+                    required
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="form-input"
+                    disabled={loading}
+                  />
+                  
+                  <input
+                    type="text"
+                    name="author"
+                    placeholder="Author"
+                    required
+                    value={formData.author}
+                    onChange={handleInputChange}
+                    className="form-input"
+                    disabled={loading}
+                  />
+                </div>
+                
+                <div className="form-row">
+                  <input
+                    type="text"
+                    name="publisher"
+                    placeholder="Publisher"
+                    value={formData.publisher}
+                    onChange={handleInputChange}
+                    className="form-input"
+                    disabled={loading}
+                  />
+                  
+                  <input
+                    type="number"
+                    name="year_published"
+                    placeholder="Year Published"
+                    value={formData.year_published || ''}
+                    onChange={handleInputChange}
+                    className="form-input"
+                    disabled={loading}
+                  />
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group-half">
+                    <input
+                      type="text"
+                      name="isbn"
+                      placeholder="ISBN"
+                      value={formData.isbn}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      disabled={loading}
+                    />
+                  </div>
+                  
+                  <div className="form-group-half">
+                    <input
+                      type="number"
+                      name="quantity"
+                      placeholder="Quantity"
+                      required
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      min="0"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-actions">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn btn-primary"
+                  >
+                    {loading ? 'Saving...' : editingBook ? 'Update Book' : 'Add Book'}
+                  </button>
+                  
+                  {editingBook && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="btn btn-secondary"
+                      disabled={loading}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Books List */}
+            <div className="table-section">
+              <div className="section-header">
+                <h2>Books List ({safeBooks.length})</h2>
+                <button 
+                  onClick={loadBooks} 
+                  className="btn-refresh"
+                  disabled={loadingBooks}
+                >
+                  {loadingBooks ? 'Loading...' : '🔄 Refresh'}
+                </button>
               </div>
-            )}
-          </div>
-        </div>
+              
+              {loadingBooks ? (
+                <div className="loading">
+                  <div className="spinner"></div>
+                  Loading books...
+                </div>
+              ) : safeBooks.length === 0 ? (
+                <div className="empty-state">
+                  <p>No books found. Add your first book above.</p>
+                  <button onClick={loadBooks} className="btn btn-secondary">
+                    Try Again
+                  </button>
+                </div>
+              ) : (
+                <div className="table-container">
+                  <table className="books-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Publisher</th>
+                        <th>Year</th>
+                        <th>Quantity</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {safeBooks.map((book) => (
+                        <tr key={book.id}>
+                          <td className="id-cell">#{book.id}</td>
+                          <td>{book.title || 'No Title'}</td>
+                          <td>{book.author || 'No Author'}</td>
+                          <td>{book.publisher || '-'}</td>
+                          <td>{book.year_published || '-'}</td>
+                          <td>
+                            <span className={`quantity-badge ${book.quantity > 0 ? 'available' : 'unavailable'}`}>
+                              {book.quantity}
+                            </span>
+                          </td>
+                          <td className="actions-cell">
+                            <button
+                              onClick={() => handleEdit(book)}
+                              className="btn-edit"
+                              disabled={loading}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(book.id)}
+                              className="btn-delete"
+                              disabled={loading}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Peminjaman Form */}
+            <PeminjamanForm onSuccess={() => loadBooks()} />
+            
+            {/* Peminjaman List */}
+            <PeminjamanList />
+          </>
+        )}
       </div>
     </Layout>
   );

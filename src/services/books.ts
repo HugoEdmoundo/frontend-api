@@ -1,6 +1,5 @@
 import api from './api';
 
-// Export interface dulu
 export interface Book {
   id: number;
   title: string;
@@ -22,16 +21,38 @@ export interface BookFormData {
   quantity: number;
 }
 
-// Lalu export service
+export interface ApiResponse<T> {
+  status: string;
+  data: T;
+  total?: number;
+  message?: string;
+}
+
 export const bookService = {
   async getAll(): Promise<Book[]> {
-    const response = await api.get<Book[]>('/books');
-    return response.data;
+    const response = await api.get<ApiResponse<Book[]> | Book[]>('/books');
+    
+    // Handle both response formats
+    if (Array.isArray(response.data)) {
+      // If response.data is directly an array
+      return response.data;
+    } else if (response.data && response.data.data) {
+      // If response.data has {status: 'success', data: [...]}
+      return response.data.data;
+    } else {
+      // Fallback
+      console.error('Unexpected response format:', response.data);
+      return [];
+    }
   },
 
   async getById(id: number): Promise<Book> {
-    const response = await api.get<Book>(`/books/${id}`);
-    return response.data;
+    const response = await api.get<ApiResponse<Book> | Book>(`/books/${id}`);
+    
+    if (response.data && 'data' in response.data) {
+      return response.data.data;
+    }
+    return response.data as Book;
   },
 
   async create(bookData: BookFormData): Promise<any> {

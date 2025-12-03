@@ -1,0 +1,279 @@
+.peminjaman-list {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-section h2 {
+  margin: 0;
+  color: #2c5530;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.btn-refresh {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-refresh:hover {
+  background: #5a6268;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.peminjaman-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.peminjaman-table th,
+.peminjaman-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.peminjaman-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.peminjaman-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-dipinjam {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-dikembalikan {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-terlambat {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-detail {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-detail:hover {
+  background: #138496;
+}
+
+.btn-kembalikan {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-kembalikan:hover {
+  background: #218838;
+}
+
+.detail-row {
+  background: #f8f9fa !important;
+}
+
+.detail-section {
+  padding: 15px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.detail-section h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.detail-table th,
+.detail-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-table th {
+  background: #f8f9fa;
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .peminjaman-table th,
+  .peminjaman-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+
+/* Dropdown styling */
+select.form-input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%;
+  background: white;
+  cursor: pointer;
+}
+
+select.form-input:focus {
+  outline: none;
+  border-color: #2c5530;
+  box-shadow: 0 0 0 2px rgba(44, 85, 48, 0.1);
+}
+
+.form-help {
+  display: block;
+  margin-top: 5px;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+/* Book item improvements */
+.book-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.book-details .author {
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.book-details .stock {
+  color: #28a745;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.max-info {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-left: 5px;
+}
+
+/* Selected books summary */
+.selected-summary {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e9f7ef;
+  border: 1px solid #d4edda;
+  border-radius: 6px;
+}
+
+.selected-summary ul {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+}
+
+.selected-summary li {
+  margin-bottom: 5px;
+  color: #155724;
+}
+
+/* Loading states */
+.loading-small {
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  color: #6c757d;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .book-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .book-quantity {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+  }
+}
