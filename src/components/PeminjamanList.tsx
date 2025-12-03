@@ -32,20 +32,32 @@ const PeminjamanList: React.FC = () => {
   }, []);
 
   const loadPeminjaman = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:8080/peminjaman', {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`
-        }
-      });
+  try {
+    setLoading(true);
+    const response = await fetch('http://localhost:8080/peminjaman', {
+      headers: {
+        'Authorization': `Bearer ${authService.getToken()}`
+      }
+    });
+    
+    const data = await response.json();
+    console.log('✅ Peminjaman API Response:', data); // Debug log
+    
+    if (data.status === 'success') {
+      console.log('📊 Data peminjaman:', data.data); // Debug log
       
-      const data = await response.json();
+      // Debug pertama item
+      if (data.data && data.data.length > 0) {
+        console.log('🔍 First peminjaman item:', data.data[0]);
+        console.log('📚 Detail buku dari first item:', data.data[0].detail_buku);
+      }
       
-      if (data.status === 'success') {
-        // Load details for each peminjaman
-        const peminjamanWithDetails = await Promise.all(
-          data.data.map(async (item: Peminjaman) => {
+      // Load details untuk setiap peminjaman
+      const peminjamanWithDetails = await Promise.all(
+        data.data.map(async (item: Peminjaman) => {
+          console.log(`🔄 Loading details for peminjaman ID ${item.id}`);
+          
+          try {
             const detailResponse = await fetch(`http://localhost:8080/peminjaman/${item.id}`, {
               headers: {
                 'Authorization': `Bearer ${authService.getToken()}`
@@ -53,22 +65,32 @@ const PeminjamanList: React.FC = () => {
             });
             
             const detailData = await detailResponse.json();
+            console.log(`📖 Detail response for ID ${item.id}:`, detailData);
+            
             return {
               ...item,
               detail_buku: detailData.data?.detail_buku || []
             };
-          })
-        );
-        
-        setPeminjaman(peminjamanWithDetails);
-      }
-    } catch (error) {
-      setError('Gagal memuat data peminjaman');
-      console.error(error);
-    } finally {
-      setLoading(false);
+          } catch (detailError) {
+            console.error(`❌ Error loading details for ID ${item.id}:`, detailError);
+            return {
+              ...item,
+              detail_buku: []
+            };
+          }
+        })
+      );
+      
+      console.log('✅ Final data with details:', peminjamanWithDetails);
+      setPeminjaman(peminjamanWithDetails);
     }
-  };
+  } catch (error) {
+    console.error('❌ Error loading peminjaman:', error);
+    setError('Gagal memuat data peminjaman');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleKembalikan = async (id: number) => {
     if (!window.confirm('Apakah Anda yakin ingin mengembalikan buku ini?')) {

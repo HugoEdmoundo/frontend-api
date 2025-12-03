@@ -153,67 +153,112 @@ const PeminjamanForm: React.FC<PeminjamanFormProps> = ({ onSuccess }) => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
-    // Validasi
-    if (!formData.users_id) {
-      setError('Pilih anggota terlebih dahulu');
-      setLoading(false);
-      return;
-    }
+  // Validasi
+  if (!formData.users_id) {
+    setError('Pilih anggota terlebih dahulu');
+    setLoading(false);
+    return;
+  }
 
-    if (Object.keys(selectedBooks).length === 0) {
-      setError('Pilih minimal 1 buku');
-      setLoading(false);
-      return;
-    }
+  if (Object.keys(selectedBooks).length === 0) {
+    setError('Pilih minimal 1 buku');
+    setLoading(false);
+    return;
+  }
 
-    try {
-      const bukuArray = Object.entries(selectedBooks).map(([bookId, data]) => ({
-        buku_id: parseInt(bookId),
-        jumlah: data.jumlah
-      }));
+  try {
+    // Format data buku sesuai dengan yang diharapkan backend
+    const bukuArray = Object.entries(selectedBooks).map(([bookId, data]) => ({
+      buku_id: parseInt(bookId),
+      jumlah: data.jumlah
+    }));
 
-      const payload = {
-        users_id: parseInt(formData.users_id), // Perhatikan: users_id bukan user_id
-        tanggal_pinjam: formData.tanggal_pinjam,
-        tanggal_kembali: formData.tanggal_kembali,
-        buku: bukuArray
-      };
+    // Payload dengan kedua format (user_id dan users_id untuk kompatibilitas)
+    const payload = {
+      user_id: parseInt(formData.users_id),  // Tambah format user_id
+      users_id: parseInt(formData.users_id), // Format users_id
+      tanggal_pinjam: formData.tanggal_pinjam,
+      tanggal_kembali: formData.tanggal_kembali,
+      buku: bukuArray
+    };
 
-      console.log('Submitting peminjaman:', payload);
+    console.log('Submitting peminjaman payload:', payload);
 
-      const response = await fetch('http://localhost:8080/peminjaman', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authService.getToken()}`
-        },
-        body: JSON.stringify(payload)
-      });
+    const response = await fetch('http://localhost:8080/peminjaman', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authService.getToken()}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
 
-      const data = await response.json();
-      console.log('Peminjaman response:', data);
+    const data = await response.json();
+    console.log('Peminjaman API Response:', data);
 
-      if (response.ok) {
-        setSuccess(`✅ Peminjaman berhasil! ID: ${data.data?.id || 'N/A'}`);
-        setSelectedBooks({});
-        if (onSuccess) onSuccess();
-        
-        // Refresh data buku
-        loadBooks();
-      } else {
-        setError(`❌ ${data.message || 'Gagal membuat peminjaman'}`);
+    if (!response.ok) {
+      // Coba parsing error message
+      let errorMessage = 'Gagal membuat peminjaman';
+      
+      if (data.message) {
+        errorMessage = data.message;
+      } else if (data.error) {
+        errorMessage = data.error;
+      } else if (response.status === 400) {
+        errorMessage = 'Bad Request - Data yang dikirim tidak valid';
+      } else if (response.status === 500) {
+        errorMessage = 'Server Error - Silakan coba lagi nanti';
       }
-    } catch (error: any) {
-      setError(`❌ ${error.message || 'Terjadi kesalahan jaringan'}`);
-    } finally {
-      setLoading(false);
+      
+      throw new Error(`${errorMessage} (Status: ${response.status})`);
     }
-  };
+
+    if (data.status === 'success') {
+      const successMsg = `✅ Peminjaman berhasil dibuat! 
+                         ID: ${data.data?.id || data.peminjaman_id || 'N/A'}
+                         Anggota: ${data.data?.anggota_nama || 'N/A'}`;
+      
+      setSuccess(successMsg);
+      setSelectedBooks({});
+      
+      // Reset form untuk peminjaman berikutnya
+      if (users.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          tanggal_pinjam: new Date().toISOString().split('T')[0],
+          tanggal_kembali: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        }));
+      }
+      
+      if (onSuccess) onSuccess();
+      
+      // Refresh data buku
+      setTimeout(() => {
+        loadBooks();
+      }, 1000);
+    } else {
+      setError(`❌ ${data.message || 'Gagal membuat peminjaman'}`);
+    }
+  } catch (error: any) {
+    console.error('Peminjaman error details:', error);
+    
+    // User-friendly error messages
+    let userMessage = error.message;
+    if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+      userMessage = 'Tidak dapat terhubung ke server. Periksa koneksi Anda.';
+    }
+    
+    setError(`❌ ${userMessage}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getSelectedUserName = () => {
     const selectedUser = users.find(u => u.id.toString() === formData.users_id);
