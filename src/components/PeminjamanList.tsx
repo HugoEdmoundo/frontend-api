@@ -149,7 +149,7 @@ const PeminjamanList: React.FC = () => {
       <div className="header-section">
         <h2>Daftar Peminjaman</h2>
         <button onClick={loadPeminjaman} className="btn-refresh">
-          🔄 Refresh
+           Refresh
         </button>
       </div>
 

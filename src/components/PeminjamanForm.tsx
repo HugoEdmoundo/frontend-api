@@ -436,7 +436,7 @@ const PeminjamanForm: React.FC<PeminjamanFormProps> = ({ onSuccess }) => {
                 Menyimpan...
               </>
             ) : (
-              '💾 Simpan Peminjaman'
+              ' Simpan Peminjaman'
             )}
           </button>
           <button
@@ -449,7 +449,7 @@ const PeminjamanForm: React.FC<PeminjamanFormProps> = ({ onSuccess }) => {
             className="btn btn-secondary"
             disabled={Object.keys(selectedBooks).length === 0}
           >
-            🔄 Reset Pilihan
+             Reset Pilihan
           </button>
         </div>
       </form>
